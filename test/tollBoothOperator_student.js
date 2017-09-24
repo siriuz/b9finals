@@ -143,6 +143,7 @@ contract('TollBoothOperator', function(accounts) {
                     .then(result => assert.strictEqual(result.toNumber(), 1))
                     .then(() => operator.reportExitRoad(secret0, { from: booth1 }))
                     .then(tx => {
+                        console.log(tx.logs);
                         assert.strictEqual(tx.receipt.logs.length, 1);
                         assert.strictEqual(tx.logs.length, 1);
                         const logExited = tx.logs[0];
@@ -223,6 +224,7 @@ contract('TollBoothOperator', function(accounts) {
 
             const extraDeposit0 = deposit0 + randomIntIn(1, 1000);
             const extraDeposit1 = deposit0 + randomIntIn(1, 1000);
+            console.log("extra deposit 0" , extraDeposit0)
             let vehicle0InitBal, vehicle1InitBal;
 
             beforeEach("should have 2 vehicles enter and exit road on same unknown route", function() {
@@ -235,14 +237,19 @@ contract('TollBoothOperator', function(accounts) {
                     .then(() => web3.eth.getBalancePromise(vehicle1))
                     .then(balance => vehicle1InitBal = balance)
                     .then(() => operator.reportExitRoad(secret1, { from: booth2 }))
-                    .then(tx => operator.reportExitRoad(secret0, { from: booth2 }));
+                    .then(tx => operator.reportExitRoad(secret0, { from: booth2 }))
+                    .then(() => console.log("got here"))
+                    .then(() => console.log(hashed0))
+                    .then(() => console.log(hashed1));
             });
 
             it("should be possible to set the base route price below both deposits and reduce count by 1", function() {
                 return operator.setRoutePrice.call(booth0, booth2, deposit0, { from: owner1 })
                     .then(success => assert.isTrue(success))
+                    .then(() => console.log(deposit0))
                     .then(() => operator.setRoutePrice(booth0, booth2, deposit0, { from: owner1 }))
                     .then(tx => {
+                        console.log("got here3")
                         assert.strictEqual(tx.receipt.logs.length, 2);
                         assert.strictEqual(tx.logs.length, 2);
                         const logPriceSet = tx.logs[0];

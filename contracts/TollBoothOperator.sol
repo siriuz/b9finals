@@ -31,6 +31,7 @@ contract TollBoothOperator is Pausable, RoutePriceHolder, TollBoothHolder, Depos
     // pendingPayments[entryBooth][exitBooth]
     mapping (address => mapping(address => paymentQueue)) pendingPayments;
 
+
     function paymentQueuePush (address entryBooth, address exitBooth, bytes32 hashedSecret) internal {
         paymentQueue aQueue = pendingPayments[entryBooth][exitBooth];
         assert(aQueue.paymentQueueItems[aQueue.tail] == bytes32(0));
@@ -54,11 +55,7 @@ contract TollBoothOperator is Pausable, RoutePriceHolder, TollBoothHolder, Depos
         paymentQueue aQueue = pendingPayments[entryBooth][exitBooth];
         return (aQueue.tail - aQueue.head);
     }
-
-    //mapping (address => mapping(address => EntryPermit)) vehiclesEnRoute; // keeps track of vehicle's exit secrets for each entry booth it has active. if exit secret does not exist then vehicle has not entered system 
-    // vehiclesEnRoute[vehicleAddress][entryBooth][exitSecretHashed] = depositWeis
-    mapping (address => mapping(address => mapping(bytes32 => uint))) vehiclesEnRoute;
-    
+  
     // maps exit hashes to vehicle entry details
     mapping (bytes32 => EntryPermit) entryPermits;
 
@@ -133,7 +130,6 @@ contract TollBoothOperator is Pausable, RoutePriceHolder, TollBoothHolder, Depos
             // store road entry inside table
 
             entryPermits[exitSecretHashed] = EntryPermit(msg.sender, entryBooth, depositedWeis);
-            vehiclesEnRoute[msg.sender][entryBooth][exitSecretHashed] = depositedWeis;
 
             LogRoadEntered(msg.sender, entryBooth, exitSecretHashed, depositedWeis);
             
@@ -249,13 +245,12 @@ contract TollBoothOperator is Pausable, RoutePriceHolder, TollBoothHolder, Depos
             
             uint vehicleType = currentRegulator.getVehicleType(vehicle);
             uint depositMultiplier = getMultiplier(vehicleType);
-            uint baseRoutePrice = getRoutePrice(entryBooth, msg.sender);
+            uint baseRoutePrice = getRoutePrice(entryBooth, exitBooth);
             
             finalFee = baseRoutePrice.mul(depositMultiplier);
             int feeDifference = int(depositedWeis - finalFee);
             
             assert(feeDifference < int(depositedWeis)); // bounds checking
-
             if (feeDifference == 0) {                   // no money to refund
                 refundWeis = 0;
             } else if (feeDifference > 0) {             // calculate refund amount
@@ -297,13 +292,41 @@ contract TollBoothOperator is Pausable, RoutePriceHolder, TollBoothHolder, Depos
             address exitBooth,
             uint count)
         public
+        whenNotPaused()
         returns (bool success)
         {
-// Clears in a FIFO Manner -> implies that the pending payments have to be tracked in sequence
-// Pending payments need: entryBooth, exitBooth, hashedSecret -> entrypermit
-assert(true);
+            require(count > 0);
+            require(isTollBooth(entryBooth));
+            require(isTollBooth(exitBooth));
+            require(getPendingPaymentCount(entryBooth, exitBooth) >= count);
+
+            for (uint i = 0; i < count; i++) {
+                if (!processOnePendingPayment(entryBooth, exitBooth)) { return false; }
+            }
+            return true;            
         }
 
+    function processOnePendingPayment(
+        address entryBooth,
+        address exitBooth
+    )
+    internal
+    returns (bool success)
+    {
+        bytes32 hashedSecret = paymentQueuePop(entryBooth, exitBooth);
+        var (finalFee, refundWeis) = calculateFinalFeeAndRefund(exitBooth, hashedSecret);
+        address vehicle = entryPermits[hashedSecret].vehicle;
+        
+        feesForWithdrawal = feesForWithdrawal.add(finalFee);              // pay the operator
+        delete entryPermits[hashedSecret].depositedWeis;
+        LogRoadExited(exitBooth, hashedSecret, finalFee, refundWeis);
+        // only do refund at the bottom because we are using push payment and it is not safe to do it earlier
+        if (refundWeis > 0) {
+            vehicle.transfer(refundWeis);
+        }
+        
+        return true;
+    }
     /**
      * @return The amount that has been collected so far through successful payments.
      */
@@ -345,15 +368,20 @@ assert(true);
             return true;           
         }
 
-    /*
-     * You need to create:
-     *
-     * - a contract named `TollBoothOperator` that:
-     *     - is `OwnedI`, `PausableI`, `DepositHolderI`, `TollBoothHolderI`,
-     *         `MultiplierHolderI`, `RoutePriceHolderI`, `RegulatedI` and `TollBoothOperatorI`.
-     *     - has a constructor that takes:
-     *         - one `bool` parameter, the initial paused state.
-     *         - one `uint` parameter, the initial deposit wei value, which cannot be 0.
-     *         - one `address` parameter, the initial regulator, which cannot be 0.
-     */
-}
+    // override setRoutePrice in RoutePriceHolder
+    function setRoutePrice(
+        address entryBooth,
+        address exitBooth,
+        uint priceWeis
+    )
+    onlyOwner()
+    validTollBooths(entryBooth, exitBooth)
+    returns (bool success)
+    {
+        RoutePriceHolder.setRoutePrice(entryBooth, exitBooth, priceWeis);
+        if (paymentQueueLength(entryBooth, exitBooth) != 0) {
+            processOnePendingPayment(entryBooth, exitBooth);
+        }
+        return true;
+    }
+ }
