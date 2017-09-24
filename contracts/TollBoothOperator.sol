@@ -14,8 +14,20 @@ import './SafeMath.sol';
 contract TollBoothOperator is Pausable, RoutePriceHolder, TollBoothHolder, DepositHolder, MultiplierHolder, Regulated, TollBoothOperatorI {
     using SafeMath for uint;
 
-    mapping (address => mapping(address => bytes32)) vehiclesEnRoute; // keeps track of vehicle's exit secrets for each entry booth it has active. if exit secret does not exist then vehicle has not entered system 
-    mapping (bytes32 => bool) usedExitSecrets;
+    struct EntryPermit {
+        address vehicle;
+        address entryBooth;
+        uint depositedWeis;
+    }
+
+    uint feesForWithdrawal;
+
+    //mapping (address => mapping(address => EntryPermit)) vehiclesEnRoute; // keeps track of vehicle's exit secrets for each entry booth it has active. if exit secret does not exist then vehicle has not entered system 
+    // vehiclesEnRoute[vehicleAddress][entryBooth][exitSecretHashed] = depositWeis
+    mapping (address => mapping(address => mapping(bytes32 => uint))) vehiclesEnRoute;
+    
+    // maps exit hashes to vehicle entry details
+    mapping (bytes32 => EntryPermit) entryPermits;
 
     function TollBoothOperator (bool _paused, uint _deposit, address _owner) Owned() Pausable(_paused) DepositHolder(_deposit) Regulated(msg.sender) {
     }
@@ -83,14 +95,16 @@ contract TollBoothOperator is Pausable, RoutePriceHolder, TollBoothHolder, Depos
             // calculate depositHolder * multiplier
 
             require(depositedWeis.sub(minimumRequiredDeposit) > 0);
-            require(usedExitSecrets[exitSecretHashed] == false); // check to make sure that it has never ever been used
+            require(entryPermits[exitSecretHashed].vehicle == address(0)); // check to make sure that it has never ever been used
 
             // store road entry inside table
 
-            usedExitSecrets[exitSecretHashed] = true;
-            vehiclesEnRoute[msg.sender][entryBooth] = exitSecretHashed;
+            entryPermits[exitSecretHashed] = EntryPermit(msg.sender, entryBooth, depositedWeis);
+            vehiclesEnRoute[msg.sender][entryBooth][exitSecretHashed] = depositedWeis;
 
             LogRoadEntered(msg.sender, entryBooth, exitSecretHashed, depositedWeis);
+            
+            return true;
 
         }
 
@@ -111,8 +125,11 @@ contract TollBoothOperator is Pausable, RoutePriceHolder, TollBoothHolder, Depos
             address entryBooth,
             uint depositedWeis)
             {
-                
-assert(true);
+                EntryPermit entryDetails = entryPermits[exitSecretHashed];
+
+                vehicle = entryDetails.vehicle;
+                entryBooth = entryDetails.entryBooth;
+                depositedWeis = entryDetails.depositedWeis;
             }
 
     /**
@@ -154,10 +171,55 @@ assert(true);
      */
     function reportExitRoad(bytes32 exitSecretClear)
         public
+        whenNotPaused()
         returns (uint status)
         {
+            require(isTollBooth(msg.sender));
 
-assert(true);
+            bytes32 hashedSecret = hashSecret(exitSecretClear);
+            var (vehicle, entryBooth, depositedWeis) = getVehicleEntry(hashedSecret);
+
+            require(vehicle != address(0));                 // check if entry permit exists
+            require(entryBooth != msg.sender);              // check if entrybooth is same as calling booth
+            require(vehiclesEnRoute[vehicle][entryBooth][hashedSecret] != 0); // check if deposit has already been withdrawn
+
+            // at this point we have verified that the vehicle entered the system legitimately
+
+            uint vehicleType = currentRegulator.getVehicleType(vehicle);
+            uint depositMultiplier = getMultiplier(vehicleType);
+            uint baseRoutePrice = getRoutePrice(entryBooth, msg.sender);
+
+            if (baseRoutePrice != 0) {                      // if route price exists 
+                uint finalFee = baseRoutePrice.mul(depositMultiplier);
+                uint refundWeis;
+                int feeDifference = int(depositedWeis - finalFee);
+                
+                assert(feeDifference < int(depositedWeis)); // bounds checking
+
+                if (feeDifference == 0) {                   // no money to refund
+                    refundWeis = 0;
+                } else if (feeDifference > 0) {             // calculate refund amount
+                    refundWeis = uint(feeDifference);
+                } else {                                    // oops operator messed up with this deposit setting
+                    finalFee = depositedWeis;
+                    refundWeis = 0;
+                }
+                feesForWithdrawal = feesForWithdrawal.add(finalFee);              // pay the operator
+                LogRoadExited(msg.sender, hashedSecret, finalFee, refundWeis);
+            } else {                                        // pending oracle if route price does not exist
+                LogPendingPayment(hashedSecret, entryBooth, msg.sender);
+                // TODO: add to pending queue
+                return 2;
+            }
+            // void entry permit - after entry permit has been voided this function cannot be re-entrance attacked
+            delete vehiclesEnRoute[vehicle][entryBooth][hashedSecret];
+            delete entryPermits[hashedSecret].depositedWeis;
+
+            // only do refund at the bottom because we are using push payment and it is not safe to do it earlier
+            if (refundWeis > 0) {
+                vehicle.transfer(refundWeis);
+                return 1;
+            }
         }
 
     /**
@@ -206,8 +268,7 @@ assert(true);
         public
         returns(uint amount)
         {
-
-assert(true);
+            return feesForWithdrawal;
         }
 
     /**
@@ -229,10 +290,15 @@ assert(true);
      */
     function withdrawCollectedFees()
         public
+        onlyOwner()
         returns(bool success)
         {
-            
-assert(true);
+            require(feesForWithdrawal > 0);
+            uint amountSent = feesForWithdrawal;
+            feesForWithdrawal = 0;
+            currentOwner.transfer(amountSent);
+
+            return true;           
         }
 
     /*
