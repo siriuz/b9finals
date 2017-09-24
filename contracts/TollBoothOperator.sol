@@ -22,6 +22,39 @@ contract TollBoothOperator is Pausable, RoutePriceHolder, TollBoothHolder, Depos
 
     uint feesForWithdrawal;
 
+    struct paymentQueue {
+        uint head; // points to current unpaid head !! indexed starting at 0
+        uint tail; // points to next free id
+        mapping (uint => bytes32) paymentQueueItems;
+    }
+
+    // pendingPayments[entryBooth][exitBooth]
+    mapping (address => mapping(address => paymentQueue)) pendingPayments;
+
+    function paymentQueuePush (address entryBooth, address exitBooth, bytes32 hashedSecret) internal {
+        paymentQueue aQueue = pendingPayments[entryBooth][exitBooth];
+        assert(aQueue.paymentQueueItems[aQueue.tail] == bytes32(0));
+
+        aQueue.paymentQueueItems[aQueue.tail] = hashedSecret;
+        aQueue.tail++;
+    }
+
+    function paymentQueuePop (address entryBooth, address exitBooth) internal returns (bytes32) {
+        paymentQueue aQueue = pendingPayments[entryBooth][exitBooth];
+        assert(aQueue.head < aQueue.tail);
+        //assert(aQueue.paymentQueueItems[aQueue.tail] != bytes32(0));
+
+        bytes32 hashedSecret = aQueue.paymentQueueItems[aQueue.head];
+        aQueue.head++;
+
+        return hashedSecret;
+    }
+
+    function paymentQueueLength (address entryBooth, address exitBooth) internal returns (uint) {
+        paymentQueue aQueue = pendingPayments[entryBooth][exitBooth];
+        return (aQueue.tail - aQueue.head);
+    }
+
     //mapping (address => mapping(address => EntryPermit)) vehiclesEnRoute; // keeps track of vehicle's exit secrets for each entry booth it has active. if exit secret does not exist then vehicle has not entered system 
     // vehiclesEnRoute[vehicleAddress][entryBooth][exitSecretHashed] = depositWeis
     mapping (address => mapping(address => mapping(bytes32 => uint))) vehiclesEnRoute;
@@ -205,21 +238,21 @@ contract TollBoothOperator is Pausable, RoutePriceHolder, TollBoothHolder, Depos
                     refundWeis = 0;
                 }
                 feesForWithdrawal = feesForWithdrawal.add(finalFee);              // pay the operator
+                delete entryPermits[hashedSecret].depositedWeis;
                 LogRoadExited(msg.sender, hashedSecret, finalFee, refundWeis);
+                // only do refund at the bottom because we are using push payment and it is not safe to do it earlier
+                if (refundWeis > 0) {
+                    vehicle.transfer(refundWeis);
+                }
+                return 1;
+
             } else {                                        // pending oracle if route price does not exist
+                paymentQueuePush(entryBooth, msg.sender, hashedSecret);
                 LogPendingPayment(hashedSecret, entryBooth, msg.sender);
-                // TODO: add to pending queue
                 return 2;
             }
-            // void entry permit - after entry permit has been voided this function cannot be re-entrance attacked
-            delete vehiclesEnRoute[vehicle][entryBooth][hashedSecret];
-            delete entryPermits[hashedSecret].depositedWeis;
 
-            // only do refund at the bottom because we are using push payment and it is not safe to do it earlier
-            if (refundWeis > 0) {
-                vehicle.transfer(refundWeis);
-                return 1;
-            }
+
         }
 
     /**
@@ -233,8 +266,7 @@ contract TollBoothOperator is Pausable, RoutePriceHolder, TollBoothHolder, Depos
         public
         returns (uint count)
         {
-
-assert(true);
+            return paymentQueueLength(entryBooth, exitBooth);
         }
 
     /**
@@ -256,7 +288,8 @@ assert(true);
         public
         returns (bool success)
         {
-
+// Clears in a FIFO Manner -> implies that the pending payments have to be tracked in sequence
+// Pending payments need: entryBooth, exitBooth, hashedSecret -> entrypermit
 assert(true);
         }
 
