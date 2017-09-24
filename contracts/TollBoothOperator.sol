@@ -1,5 +1,6 @@
 pragma solidity ^0.4.13;
 
+import { Owned } from './Owned.sol';
 import { Pausable } from './Pausable.sol';
 import { DepositHolder } from './DepositHolder.sol';
 import { TollBoothHolder } from './TollBoothHolder.sol';
@@ -8,21 +9,28 @@ import { RoutePriceHolder } from './RoutePriceHolder.sol';
 import { TollBoothOperatorI } from './interfaces/TollBoothOperatorI.sol';
 import { Regulated } from './Regulated.sol';
 
+import './SafeMath.sol';
 
 contract TollBoothOperator is Pausable, RoutePriceHolder, TollBoothHolder, DepositHolder, MultiplierHolder, Regulated, TollBoothOperatorI {
- 
-    function TollBoothOperator (bool _paused, uint _deposit, address _regulator) {
+    using SafeMath for uint;
 
+    mapping (address => mapping(address => bytes32)) vehiclesEnRoute; // keeps track of vehicle's exit secrets for each entry booth it has active. if exit secret does not exist then vehicle has not entered system 
+    mapping (bytes32 => bool) usedExitSecrets;
+
+    function TollBoothOperator (bool _paused, uint _deposit, address _owner) Owned() Pausable(_paused) DepositHolder(_deposit) Regulated(msg.sender) {
     }
     /**
      * This provides a single source of truth for the encoding algorithm.
-     * @param secret The secret to be hashed.
+     * @param secret The secret to be hashed. 
      * @return the hashed secret.
-     */
-    function hashSecret(bytes32 secret)
-        constant
-        public
-        returns(bytes32 hashed);
+     */ 
+    function hashSecret(bytes32 secret) 
+        constant 
+        public 
+        returns(bytes32 hashed) 
+        { 
+            return keccak256(secret); 
+        } 
 
     /**
      * Event emitted when a vehicle made the appropriate deposit to enter the road system.
@@ -57,7 +65,34 @@ contract TollBoothOperator is Pausable, RoutePriceHolder, TollBoothHolder, Depos
             bytes32 exitSecretHashed)
         public
         payable
-        returns (bool success);
+        whenNotPaused
+        returns (bool success)
+        {
+            require(isTollBooth(entryBooth));
+            uint depositedWeis = msg.value;
+
+            // fetch vehicle type using address
+            uint vehicleType = currentRegulator.getVehicleType(msg.sender);
+
+            require(vehicleType > 0); // checking to make sure vehicle is registered!
+
+            // fetch multiplier using veh type
+            uint depositMultiplier = getMultiplier(vehicleType);
+            // fetch deposit via depositHolder 
+            uint minimumRequiredDeposit = currentDeposit.mul(depositMultiplier);
+            // calculate depositHolder * multiplier
+
+            require(depositedWeis.sub(minimumRequiredDeposit) > 0);
+            require(usedExitSecrets[exitSecretHashed] == false); // check to make sure that it has never ever been used
+
+            // store road entry inside table
+
+            usedExitSecrets[exitSecretHashed] = true;
+            vehiclesEnRoute[msg.sender][entryBooth] = exitSecretHashed;
+
+            LogRoadEntered(msg.sender, entryBooth, exitSecretHashed, depositedWeis);
+
+        }
 
     /**
      * @param exitSecretHashed The hashed secret used by the vehicle when entering the road.
@@ -74,7 +109,11 @@ contract TollBoothOperator is Pausable, RoutePriceHolder, TollBoothHolder, Depos
         returns(
             address vehicle,
             address entryBooth,
-            uint depositedWeis);
+            uint depositedWeis)
+            {
+                
+assert(true);
+            }
 
     /**
      * Event emitted when a vehicle exits a road system.
@@ -115,7 +154,11 @@ contract TollBoothOperator is Pausable, RoutePriceHolder, TollBoothHolder, Depos
      */
     function reportExitRoad(bytes32 exitSecretClear)
         public
-        returns (uint status);
+        returns (uint status)
+        {
+
+assert(true);
+        }
 
     /**
      * @param entryBooth the entry booth that has pending payments.
@@ -126,7 +169,11 @@ contract TollBoothOperator is Pausable, RoutePriceHolder, TollBoothHolder, Depos
     function getPendingPaymentCount(address entryBooth, address exitBooth)
         constant
         public
-        returns (uint count);
+        returns (uint count)
+        {
+
+assert(true);
+        }
 
     /**
      * Can be called by anyone. In case more than 1 payment was pending when the oracle gave a price.
@@ -145,7 +192,11 @@ contract TollBoothOperator is Pausable, RoutePriceHolder, TollBoothHolder, Depos
             address exitBooth,
             uint count)
         public
-        returns (bool success);
+        returns (bool success)
+        {
+
+assert(true);
+        }
 
     /**
      * @return The amount that has been collected so far through successful payments.
@@ -153,7 +204,11 @@ contract TollBoothOperator is Pausable, RoutePriceHolder, TollBoothHolder, Depos
     function getCollectedFeesAmount()
         constant
         public
-        returns(uint amount);
+        returns(uint amount)
+        {
+
+assert(true);
+        }
 
     /**
      * Event emitted when the owner collects the fees.
@@ -174,7 +229,11 @@ contract TollBoothOperator is Pausable, RoutePriceHolder, TollBoothHolder, Depos
      */
     function withdrawCollectedFees()
         public
-        returns(bool success);
+        returns(bool success)
+        {
+            
+assert(true);
+        }
 
     /*
      * You need to create:

@@ -101,9 +101,10 @@ contract Regulator is RegulatorI, Owned {
         {
             require(owner != currentOwner); // currentOwner is owner of the regulator, owner is parameter passed in
 
-            TollBoothOperator tb = TollBoothOperator(0x0); //new TollBoothOperator(true, deposit, owner);
-
-            LogTollBoothOperatorCreated(msg.sender, newOperator, owner, deposit);
+            TollBoothOperator tb = new TollBoothOperator(true, deposit, owner);
+            tb.setOwner(owner);
+            tollBoothOperatorRegistry[tb] = true;
+            LogTollBoothOperatorCreated(msg.sender, tb, owner, deposit);
             return TollBoothOperatorI(tb);
         }
 
@@ -134,7 +135,7 @@ contract Regulator is RegulatorI, Owned {
 
             LogTollBoothOperatorRemoved(msg.sender, operator);
 
-            return (tollBoothOperatorRegistry[operator] == false);
+            return true;
         }
 
     /**

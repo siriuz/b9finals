@@ -7,8 +7,6 @@ contract MultiplierHolder is MultiplierHolderI, Owned {
 
     mapping (uint => uint256) multiplierMapping;
 
-    function MultiplierHolder() {
-    }
 
     /**
      * Event emitted when a new multiplier has been set.
@@ -45,6 +43,8 @@ contract MultiplierHolder is MultiplierHolderI, Owned {
 
             multiplierMapping[vehicleType] = multiplier;
             LogMultiplierSet(msg.sender, vehicleType, multiplier);
+
+            return true;
         }
 
     /**
@@ -56,28 +56,8 @@ contract MultiplierHolder is MultiplierHolderI, Owned {
     function getMultiplier(uint vehicleType)
         constant
         public
-        validVehicleType(vehicleType)
         returns(uint multiplier) 
         {
             return (multiplierMapping[vehicleType]);
         }
-
-
-    modifier validVehicleType(uint vehicleType) {
-        // 0 is unregistered, 
-        // 1 is motorcycle, 
-        // 2 is car,
-        // 3 is lorry
-
-        require((vehicleType == 0) || (vehicleType == 1) || (vehicleType == 2) || (vehicleType == 3));
-        _;
-    }
-
-    /*
-     * You need to create:
-     *
-     * - a contract named `MultiplierHolder` that:
-     *     - is `OwnedI` and `MultiplierHolderI`.
-     *     - has a constructor that takes no parameter.
-     */        
 }

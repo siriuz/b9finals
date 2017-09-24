@@ -33,11 +33,15 @@ contract('DepositHolder', function (accounts) {
     })
 
     describe('setDeposit', function () {
+        let depositHolderInstance;
+
         it('should set deposit correctly and emit a log event', function () {
             return DepositHolderMock.new(105, { from: owner0 })
 
+                .then(instance => depositHolderInstance = instance)
+
                 .then((instance) => {
-                    return instance.setDeposit(5, { from: owner0 })
+                    return depositHolderInstance.setDeposit(5, { from: owner0 })
                 })
 
                 .then((tx) => {
@@ -47,6 +51,14 @@ contract('DepositHolder', function (accounts) {
                     assert.strictEqual(logChanged.event, "LogDepositSet");
                     assert.strictEqual(logChanged.args.depositWeis.toNumber(), 5);
                     assert.strictEqual(logChanged.args.sender, owner0);
+                })
+
+                .then(() => {
+                    return depositHolderInstance.getDeposit();
+                })
+
+                .then((result) => {
+                    assert.strictEqual(result.toNumber(), 5)
                 })
         });
 
@@ -60,7 +72,7 @@ contract('DepositHolder', function (accounts) {
                     )
                 })
         })
- 
+
         it('should revert if setDeposit is called with depositWeis = 0', function () {
 
             return DepositHolderMock.new(105, { from: owner0 })
