@@ -10,14 +10,12 @@ contract PausableMock is Pausable {
 	}
 
 	function countUpWhenPaused()
-		whenPaused 
-	{
+		whenPaused {
 		counters[isPaused()]++;
 	}
 
 	function countUpWhenNotPaused()
-		whenNotPaused 
-	{
+		whenNotPaused {
 		counters[isPaused()]++;
 	}
 }
