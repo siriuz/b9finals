@@ -94,7 +94,7 @@ contract TollBoothOperator is Pausable, RoutePriceHolder, TollBoothHolder, Depos
             uint minimumRequiredDeposit = currentDeposit.mul(depositMultiplier);
             // calculate depositHolder * multiplier
 
-            require(depositedWeis.sub(minimumRequiredDeposit) > 0);
+            require(depositedWeis.sub(minimumRequiredDeposit) >= 0);
             require(entryPermits[exitSecretHashed].vehicle == address(0)); // check to make sure that it has never ever been used
 
             // store road entry inside table
@@ -297,7 +297,7 @@ assert(true);
             uint amountSent = feesForWithdrawal;
             feesForWithdrawal = 0;
             currentOwner.transfer(amountSent);
-
+            LogFeesCollected(msg.sender, amountSent);
             return true;           
         }
 
