@@ -207,39 +207,25 @@ contract TollBoothOperator is Pausable, RoutePriceHolder, TollBoothHolder, Depos
         whenNotPaused()
         returns (uint status)
         {
-            require(isTollBooth(msg.sender));
+            address exitBooth = msg.sender; // this probably isn't very efficient but its a lot easier on the eyes
+            require(isTollBooth(exitBooth));
 
             bytes32 hashedSecret = hashSecret(exitSecretClear);
             var (vehicle, entryBooth, depositedWeis) = getVehicleEntry(hashedSecret);
 
             require(vehicle != address(0));                 // check if entry permit exists
-            require(entryBooth != msg.sender);              // check if entrybooth is same as calling booth
-            require(vehiclesEnRoute[vehicle][entryBooth][hashedSecret] != 0); // check if deposit has already been withdrawn
+            require(entryBooth != exitBooth);              
 
             // at this point we have verified that the vehicle entered the system legitimately
 
-            uint vehicleType = currentRegulator.getVehicleType(vehicle);
-            uint depositMultiplier = getMultiplier(vehicleType);
-            uint baseRoutePrice = getRoutePrice(entryBooth, msg.sender);
+            uint baseRoutePrice = getRoutePrice(entryBooth, exitBooth);
+
 
             if (baseRoutePrice != 0) {                      // if route price exists 
-                uint finalFee = baseRoutePrice.mul(depositMultiplier);
-                uint refundWeis;
-                int feeDifference = int(depositedWeis - finalFee);
-                
-                assert(feeDifference < int(depositedWeis)); // bounds checking
-
-                if (feeDifference == 0) {                   // no money to refund
-                    refundWeis = 0;
-                } else if (feeDifference > 0) {             // calculate refund amount
-                    refundWeis = uint(feeDifference);
-                } else {                                    // oops operator messed up with this deposit setting
-                    finalFee = depositedWeis;
-                    refundWeis = 0;
-                }
+                var (finalFee, refundWeis) = calculateFinalFeeAndRefund(exitBooth, hashedSecret);
                 feesForWithdrawal = feesForWithdrawal.add(finalFee);              // pay the operator
                 delete entryPermits[hashedSecret].depositedWeis;
-                LogRoadExited(msg.sender, hashedSecret, finalFee, refundWeis);
+                LogRoadExited(exitBooth, hashedSecret, finalFee, refundWeis);
                 // only do refund at the bottom because we are using push payment and it is not safe to do it earlier
                 if (refundWeis > 0) {
                     vehicle.transfer(refundWeis);
@@ -247,12 +233,37 @@ contract TollBoothOperator is Pausable, RoutePriceHolder, TollBoothHolder, Depos
                 return 1;
 
             } else {                                        // pending oracle if route price does not exist
-                paymentQueuePush(entryBooth, msg.sender, hashedSecret);
-                LogPendingPayment(hashedSecret, entryBooth, msg.sender);
+                paymentQueuePush(entryBooth, exitBooth, hashedSecret);
+                LogPendingPayment(hashedSecret, entryBooth, exitBooth);
                 return 2;
             }
 
 
+        }
+
+        function calculateFinalFeeAndRefund (address exitBooth, bytes32 hashedSecret) 
+        internal 
+        returns (uint finalFee, uint refundWeis) 
+        {
+            var (vehicle, entryBooth, depositedWeis) = getVehicleEntry(hashedSecret);
+            
+            uint vehicleType = currentRegulator.getVehicleType(vehicle);
+            uint depositMultiplier = getMultiplier(vehicleType);
+            uint baseRoutePrice = getRoutePrice(entryBooth, msg.sender);
+            
+            finalFee = baseRoutePrice.mul(depositMultiplier);
+            int feeDifference = int(depositedWeis - finalFee);
+            
+            assert(feeDifference < int(depositedWeis)); // bounds checking
+
+            if (feeDifference == 0) {                   // no money to refund
+                refundWeis = 0;
+            } else if (feeDifference > 0) {             // calculate refund amount
+                refundWeis = uint(feeDifference);
+            } else {                                    // oops operator messed up with this deposit setting
+                finalFee = depositedWeis;
+                refundWeis = 0;
+            }
         }
 
     /**
