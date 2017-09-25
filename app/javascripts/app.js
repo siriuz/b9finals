@@ -17,12 +17,17 @@ var MetaCoin = contract(metacoin_artifacts);
 var accounts;
 var account;
 
+var regulator_owner;
+
+var regulator_contract;
+
 window.App = {
+
   start: function() {
     var self = this;
 
     // Bootstrap the MetaCoin abstraction for Use.
-    MetaCoin.setProvider(web3.currentProvider);
+    Regulator.setProvider(web3.currentProvider);
 
     // Get the initial account balance so it can be displayed.
     web3.eth.getAccounts(function(err, accs) {
@@ -38,8 +43,28 @@ window.App = {
 
       accounts = accs;
       account = accounts[0];
+      regulator_owner = accounts[0];
 
-      self.refreshBalance();
+     console.log(accounts) 
+      Regulator.deployed()
+      .then(function(instance) {
+        let contract = instance;
+        console.log("The contract:", contract);
+        regulator_contract = contract;
+        console.log(regulator_contract);
+        contract.LogTollBoothOperatorCreated({}, { fromBlock: 0, toBlock: 'latest'}).get((error, eventResult) => {
+          if (error) {
+          console.log("error", error);
+        } else {
+          console.log(eventResult);
+        }
+      })
+      })
+
+      
+
+
+      //self.refreshBalance();
     });
   },
 
@@ -62,6 +87,19 @@ window.App = {
       console.log(e);
       self.setStatus("Error getting balance; see log.");
     });
+  },
+
+  setVehicleType: function () {
+    var self = this;
+
+    var vehicleType = parseInt(document.getElementById("amount").value);
+    var vehicleAddress = document.getElementById("receiver").value;
+  
+    Regulator.deployed().then(function(instance) {
+      instance.setVehicleType(vehicleAddress, vehicleType, {from: regulator_owner});
+    }).then(function (tx) {
+      console.log(tx);
+    })
   },
 
   sendCoin: function() {
