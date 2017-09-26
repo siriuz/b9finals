@@ -7,8 +7,10 @@ I was unable to complete the full assignment, the test suite only contains the b
 There is nothing special to the setup of the application, simply do `npm install` and things should work.
 
 Tests are in the `test` folder, and the stipulated scenario tests are inside scenario_tests.js.
+Tests are run using `truffle test test/`.
 
 The frontend is mostly incomplete, I did not have time to get things done since TestRPC refused to play well with Metamask.
+Frontend is served up using `npm run dev`.
 
 Geth took too long and I simply did not have the time to finish it.
 
