@@ -6,10 +6,10 @@ import { default as Web3} from 'web3';
 import { default as contract } from 'truffle-contract'
 
 // Import our contract artifacts and turn them into usable abstractions.
-import metacoin_artifacts from '../../build/contracts/MetaCoin.json'
+import regulator_artifacts from '../../build/contracts/Regulator.json'
 
 // MetaCoin is our usable abstraction, which we'll use through the code below.
-var MetaCoin = contract(metacoin_artifacts);
+var Regulator = contract(regulator_artifacts);
 
 // The following code is simple to show off interacting with your contracts.
 // As your needs grow you will likely need to change its form and structure.
@@ -52,41 +52,55 @@ window.App = {
         console.log("The contract:", contract);
         regulator_contract = contract;
         console.log(regulator_contract);
-        contract.LogTollBoothOperatorCreated({}, { fromBlock: 0, toBlock: 'latest'}).get((error, eventResult) => {
+        
+        // Log event handlers
+
+
+        contract.LogVehicleTypeSet({}, { fromBlock: 0, toBlock: 'latest'}).watch((error, eventResult) => {
           if (error) {
           console.log("error", error);
         } else {
           console.log(eventResult);
+          self.setStatus("Vehicle " + eventResult.args.vehicle + " type set to "  + eventResult.args.vehicleType) 
         }
       })
+
+       contract.LogTollBoothOperatorCreated({}, { fromBlock: 0, toBlock: 'latest'}).watch((error, eventResult) => {
+          if (error) {
+          console.log("error", error);
+        } else {
+          self.setTollBoothLog("Tollbooth created at " + eventResult.args.newOperator + " with deposit "  + eventResult.args.depositWeis)
+          console.log(eventResult);
+        }
       })
 
-      
 
+      })
 
-      //self.refreshBalance();
     });
   },
 
   setStatus: function(message) {
-    var status = document.getElementById("status");
-    status.innerHTML = message;
+    $("#status").append("<li>" + message + "</li>");
   },
 
-  refreshBalance: function() {
-    var self = this;
+  setTollBoothLog: function(message) {
+    $("#tollboothlog").append("<li>" + message + "</li>");
+  },
 
-    var meta;
-    MetaCoin.deployed().then(function(instance) {
-      meta = instance;
-      return meta.getBalance.call(account, {from: account});
-    }).then(function(value) {
-      var balance_element = document.getElementById("balance");
-      balance_element.innerHTML = value.valueOf();
-    }).catch(function(e) {
-      console.log(e);
-      self.setStatus("Error getting balance; see log.");
-    });
+
+  createTollBoothOperator: function () {
+    var owner = $("#owneraddress").val();
+    var initialDeposit = parseInt($("#deposit").val())
+
+    console.log(owner)
+    console.log($("#owneraddress").val())
+    console.log(parseInt($("#deposit").val()))
+    Regulator.deployed().then(function(instance) {
+      console.log(instance.createNewOperator(owner, initialDeposit, {from: regulator_owner, gas: 3000000}));
+    }).then(function (tx) {
+      console.log(tx);
+    }) 
   },
 
   setVehicleType: function () {
@@ -102,26 +116,7 @@ window.App = {
     })
   },
 
-  sendCoin: function() {
-    var self = this;
 
-    var amount = parseInt(document.getElementById("amount").value);
-    var receiver = document.getElementById("receiver").value;
-
-    this.setStatus("Initiating transaction... (please wait)");
-
-    var meta;
-    MetaCoin.deployed().then(function(instance) {
-      meta = instance;
-      return meta.sendCoin(receiver, amount, {from: account});
-    }).then(function() {
-      self.setStatus("Transaction complete!");
-      self.refreshBalance();
-    }).catch(function(e) {
-      console.log(e);
-      self.setStatus("Error sending coin; see log.");
-    });
-  }
 };
 
 window.addEventListener('load', function() {
