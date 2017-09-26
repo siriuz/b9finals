@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Regulator account page</title>
+  <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+  <script src="./tollbooth.js"></script>
+  <script
+  src="https://code.jquery.com/jquery-3.2.1.min.js"
+  integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+  crossorigin="anonymous"></script>
+
+</head>
+<body>
+  <h1>Toll Booth Operator</h1>
+  
+  <select id="tollBoothOperatorList" onChange="App.populateTollBoothOperatorDetails()">
+    <option />
+  </select>
+  
+  <br>
+  <br>
+
+  <fieldset>
+    <div>
+  <input type="text" id="tollBoothOperatorAddressField" disabled />
+  <label for="tollBoothOperatorAddressField">Address</label>
+</div>
+<div>
+  <input type="text" id="tollBoothOperatorDepositField" disabled />
+  <label for="tollBoothOperatorDepositField">Minimum deposit</label>
+</div>
+</fieldset>
+
+
+  <br>
+  <br>
+
+  <h1>
+    Add new Tollbooth
+  </h1>
+<div>
+  <input type="text" id="tollBoothAddressField" />
+  <label for="tollBoothAddressField">New Tollbooth Address</label>
+  <button onclick="App.addTollBooth()">Add new Tollbooth</button>
+</div>
+
+
+
+<br>
+<br>
+<h1>
+  All existing Tollbooths
+</h1>
+
+<ol id="tollbooths">
+ </ol>
+
+ <br>
+ <br>
+ <h1>
+Set route price  
+</h1>
+    <div>
+  <input type="text" id="entryTollBooth" />
+  <label for="entryTollBooth">Entry tollbooth address</label>
+</div>
+<div>
+  <input type="text" id="exitTollBooth" />
+  <label for="exitTollBooth">Exit tollbooth address</label>
+</div>
+
+<div>
+    <input type="text" id="routePriceWeis" />
+    <label for="routePriceWeis">Route price in Weis</label>
+  </div>
+
+<button onclick="App.setRoutePrice()">Set route price</button>
+
+<br>
+<br>
+
+<h1>
+  Route Prices
+</h1>
+<ol id="routeprices">
+ </ol>
+
+
+
+</body>
+</html>
