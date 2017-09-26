@@ -5,6 +5,8 @@ module.exports = {
   entry: {
     regulator: './app/javascripts/regulator.js',
     tollbooth: './app/javascripts/tollbooth.js',
+    vehicle: './app/javascripts/vehicle.js',
+    tollbooth_booth: './app/javascripts/tollbooth_booth.js',
   },
   output: {
     path: path.resolve(__dirname, 'build'),
@@ -17,6 +19,8 @@ module.exports = {
       { from: './app/index.html', to: "index.html" },
       { from: './app/regulator.html', to: "regulator.html" },
       { from: './app/tollbooth.html', to: "tollbooth.html" },
+      { from: './app/vehicle.html', to: "vehicle.html" },
+      { from: './app/tollbooth_booth.html', to: "tollbooth_booth.html" },
     ])
   ],
   module: {

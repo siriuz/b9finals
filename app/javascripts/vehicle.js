@@ -101,15 +101,33 @@ window.App = {
                     console.log(eventResult);
                   }
                 })
-
                 TollBoothOperator.at(eventResult.args.newOperator).LogRoutePriceSet({}, {fromBlock: 0, toBlock: 'latest'}).watch((error, eventResult) => {
                   if (error) {
                     console.log("error", error);
                   } else {
-                    $("#routeprices").append("<li>" + "<b>" + eventResult.args.priceWeis + "</b>" + " " + eventResult.args.entryBooth + "->" + eventResult.args.exitBooth + "</li>");
+                    $("#routeprices").append("<li>" + "<b>" + eventResult.args.priceWeis + "</b>" + eventResult.args.entryBooth + "->" + eventResult.args.exitBooth + "</li>");
                     console.log(eventResult);
                   }
                 })
+                 TollBoothOperator.at(eventResult.args.newOperator).LogRoadEntered({}, {fromBlock: 0, toBlock: 'latest'}).watch((error, eventResult) => {
+                  if (error) {
+                    console.log("error", error);
+                  } else {
+                    $("#travellog").append("<li> Entered " + eventResult.args.entryBooth + " " + eventResult.args.depositedWeis + " " + eventResult.args.exitSecretHashed + "</li>");
+                    console.log(eventResult);
+                  }
+                })
+
+               TollBoothOperator.at(eventResult.args.newOperator).LogRoadExited({}, {fromBlock: 0, toBlock: 'latest'}).watch((error, eventResult) => {
+                  if (error) {
+                    console.log("error", error);
+                  } else {
+                    $("#travellog").append("<li>" + "<b>" + eventResult.args.priceWeis + "</b>" + eventResult.args.entryBooth + "->" + eventResult.args.exitBooth + "</li>");
+                    console.log(eventResult);
+                  }
+                })
+
+
 
 
                 
@@ -133,6 +151,22 @@ window.App = {
     });
   },
 
+  retrieveBalance: function () {
+    web3.eth.getBalance($("#vehicleaddress").val(), function (err, res) {
+      $("#vehiclebalance").val(web3.fromWei(res, "ether") + " ETH")
+    })
+  },
+
+  enterRoad: function () {
+    var secret = $("#secrettohash").val()
+    var entryBooth = $("#entryBooth").val()
+    currentTollBoothOperator.hashSecret(secret).then(function (res, err) {
+      console.log(entryBooth)
+      console.log(res)
+      return currentTollBoothOperator.enterRoad(entryBooth, res, {gas: 3000000, from: $("#vehicleaddress").val(), value: parseInt($("#deposittopay").val())})
+    }).then(console.log)
+  },
+
   setStatus: function (message) {
     $("#status").append("<li>" + message + "</li>");
   },
@@ -144,12 +178,6 @@ window.App = {
 
   addTollBooth: function () {
     currentTollBoothOperator.addTollBooth($("#tollBoothAddressField").val(), { from: tollboothoperator_owner })
-      .then(console.log)
-  },
-
-  setMultiplier: function () {
-    console.log(tollboothoperator_owner)
-    currentTollBoothOperator.setMultiplier(parseInt($("#multiplier_vehicletype").val()), parseInt($("#multiplier_value").val()), { from: tollboothoperator_owner, gas: 3000000 })
       .then(console.log)
   },
 

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Vehicle account page</title>
+  <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+  <script src="./vehicle.js"></script>
+  <script
+  src="https://code.jquery.com/jquery-3.2.1.min.js"
+  integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+  crossorigin="anonymous"></script>
+
+</head>
+<body>
+  
+  <h1>Select Toll Booth Operator first</h1>
+  
+  <select id="tollBoothOperatorList" onChange="App.populateTollBoothOperatorDetails()">
+    <option />
+  </select>
+  
+  <br>
+  <br>
+
+    <div>
+  <input type="text" id="tollBoothOperatorAddressField" disabled />
+  <label for="tollBoothOperatorAddressField">Address</label>
+</div>
+<div>
+  <input type="text" id="tollBoothOperatorDepositField" />
+  <label for="tollBoothOperatorDepositField">Minimum deposit</label>
+</div>
+  <h1>Vehicle</h1>
+  <div>
+  <input type="text" id="vehicleaddress" />
+  <label for="vehicleaddress">Your Vehicle Address</label>
+</div>
+  <br>
+  <br>
+ <button onclick="App.retrieveBalance()">Retrieve Balance</button>
+</div>
+  <input type="text" id="vehiclebalance" disabled />
+  <label for="vehiclebalance">Vehicle Balance</label>
+
+
+<h1>Make Deposit and Enter Road</h1>
+
+<input type="text" id="entryBooth" />
+  <label for="entryBooth">Entry Booth Address</label>
+  <input type="text" id="secrettohash" />
+  <label for="secrettohash">Secret to hash</label>
+  <input type="text" id="deposittopay" />
+  <label for="deposittopay">Deposit to pay</label>
+
+<button onclick="App.enterRoad()">Enter Road</button>
+
+
+<br>
+<br>
+<h1>
+  All existing Tollbooths
+</h1>
+
+<ol id="tollbooths">
+ </ol>
+
+ <br>
+ <br>
+ <h1>
+
+
+<h1>
+  Travel History
+</h1>
+<ol id="travellog">
+ </ol>
+
+
+
+</body>
+</html>

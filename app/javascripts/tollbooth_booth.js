@@ -106,7 +106,7 @@ window.App = {
                   if (error) {
                     console.log("error", error);
                   } else {
-                    $("#routeprices").append("<li>" + "<b>" + eventResult.args.priceWeis + "</b>" + " " + eventResult.args.entryBooth + "->" + eventResult.args.exitBooth + "</li>");
+                    $("#routeprices").append("<li>" + "<b>" + eventResult.args.priceWeis + "</b>" + eventResult.args.entryBooth + "->" + eventResult.args.exitBooth + "</li>");
                     console.log(eventResult);
                   }
                 })
@@ -144,12 +144,6 @@ window.App = {
 
   addTollBooth: function () {
     currentTollBoothOperator.addTollBooth($("#tollBoothAddressField").val(), { from: tollboothoperator_owner })
-      .then(console.log)
-  },
-
-  setMultiplier: function () {
-    console.log(tollboothoperator_owner)
-    currentTollBoothOperator.setMultiplier(parseInt($("#multiplier_vehicletype").val()), parseInt($("#multiplier_value").val()), { from: tollboothoperator_owner, gas: 3000000 })
       .then(console.log)
   },
 

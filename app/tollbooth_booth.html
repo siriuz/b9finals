@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Tollbooth Operator account page</title>
+  <title>Regulator account page</title>
   <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
   <script src="./tollbooth.js"></script>
   <script
@@ -90,12 +90,18 @@ Set Vehicle Multiplier
 </h1>
     <div>
   <input type="text" id="multiplier_vehicletype" />
-  <label for="multiplier_vehicletype">Vehicle Type</label>
+  <label for="entryTollBooth">Entry tollbooth address</label>
 </div>
 <div>
-  <input type="text" id="multiplier_value" />
-  <label for="multiplier_value">Multiplier</label>
+  <input type="text" id="exitTollBooth" />
+  <label for="exitTollBooth">Exit tollbooth address</label>
 </div>
-<button onclick="App.setMultiplier()">Set multiplier</button>
+
+<div>
+    <input type="text" id="routePriceWeis" />
+    <label for="routePriceWeis">Route price in Weis</label>
+  </div>
+
+<button onclick="App.setRoutePrice()">Set route price</button>
 </body>
 </html>
