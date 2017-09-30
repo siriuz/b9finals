@@ -225,7 +225,6 @@ contract('TollBoothOperator', function (accounts) {
 
 
         describe("Scenario 3", function () {
-            describe("reportExitRoad with excessive deposited", function () {
 
                 const extraDeposit = randomIntIn(1, 1000);
                 const extraPrice = extraDeposit + randomIntIn(1, 1000);
@@ -279,7 +278,6 @@ contract('TollBoothOperator', function (accounts) {
                                 vehicleInitBal.plus(multiplier0).toString(10));
                         });
                 });
-            })
 
 
 
@@ -289,7 +287,6 @@ contract('TollBoothOperator', function (accounts) {
 
 
         describe("Scenario 4", function () {
-            describe("reportExitRoad with excessive deposited", function () {
 
                 const extraDeposit = randomIntIn(1, 1000);
                 const extraPrice = extraDeposit + randomIntIn(1, 1000);
@@ -343,7 +340,6 @@ contract('TollBoothOperator', function (accounts) {
                                 vehicleInitBal.plus(extraDeposit * multiplier0).toString(10));
                         });
                 });
-            })
         })
 
         describe("Scenario 5", function () {
@@ -472,7 +468,6 @@ contract('TollBoothOperator', function (accounts) {
             });
 
 
-            describe("Clear one more pending payment", function () {
 
                 it("should be possible to set the base route price below both deposits then clear the second by hand", function () {
                     return operator.setRoutePrice(booth0, booth2, deposit0, { from: owner1 })
@@ -528,7 +523,6 @@ contract('TollBoothOperator', function (accounts) {
                         });
                 });
 
-            });
 
         });
 
@@ -539,281 +533,3 @@ contract('TollBoothOperator', function (accounts) {
 
 
 
-
-
-
-
-        // describe("enterRoad", function () {
-
-        //     it("should not be possible to enter road if paused", function () {
-        //         return operator.setPaused(true, { from: owner1 })
-        //             .then(tx => expectedExceptionPromise(
-        //                 () => operator.enterRoad(
-        //                     booth0, hashed0,
-        //                     { from: vehicle0, value: deposit0 * multiplier0, gas: 3000000 }),
-        //                 3000000));
-        //     });
-
-        //     it("should be possible to enter road with more than required deposit", function () {
-        //         return operator.enterRoad.call(
-        //             booth0, hashed0, { from: vehicle0, value: (deposit0 * multiplier0) + 1 })
-        //             .then(success => assert.isTrue(success))
-        //             .then(() => operator.enterRoad(
-        //                 booth0, hashed0, { from: vehicle0, value: (deposit0 * multiplier0) + 1 }))
-        //             .then(tx => {
-        //                 assert.strictEqual(tx.receipt.logs.length, 1);
-        //                 assert.strictEqual(tx.logs.length, 1);
-        //                 const logEntered = tx.logs[0];
-        //                 assert.strictEqual(logEntered.event, "LogRoadEntered");
-        //                 assert.strictEqual(logEntered.args.vehicle, vehicle0);
-        //                 assert.strictEqual(logEntered.args.entryBooth, booth0);
-        //                 assert.strictEqual(logEntered.args.exitSecretHashed, hashed0);
-        //                 assert.strictEqual(logEntered.args.depositedWeis.toNumber(), (deposit0 * multiplier0) + 1);
-        //                 // console.log(tx.receipt.gasUsed);
-        //                 return operator.getVehicleEntry(hashed0);
-        //             })
-        //             .then(info => {
-        //                 assert.strictEqual(info[0], vehicle0);
-        //                 assert.strictEqual(info[1], booth0);
-        //                 assert.strictEqual(info[2].toNumber(), (deposit0 * multiplier0) + 1);
-        //                 return web3.eth.getBalancePromise(operator.address);
-        //             })
-        //             .then(balance => assert.strictEqual(balance.toNumber(), deposit0 * multiplier0 + 1));
-        //     });
-
-        // });
-
-        // describe("reportExitRoad with excessive deposited", function () {
-
-        //     const extraDeposit = randomIntIn(1, 1000);
-        //     const extraPrice = extraDeposit + randomIntIn(1, 1000);
-        //     let vehicleInitBal;
-
-        //     beforeEach("should enter road with excessive deposit", function () {
-        //         return operator.enterRoad(
-        //             booth0, hashed0, { from: vehicle0, value: (deposit0 + extraDeposit) * multiplier0 })
-        //             .then(tx => web3.eth.getBalancePromise(vehicle0))
-        //             .then(balance => vehicleInitBal = balance);
-        //     });
-
-        //     it("should be possible to report exit road on route with known price below deposited", function () {
-        //         return operator.setRoutePrice(booth0, booth1, deposit0, { from: owner1 })
-        //             .then(tx => operator.reportExitRoad.call(secret0, { from: booth1 }))
-        //             .then(result => assert.strictEqual(result.toNumber(), 1))
-        //             .then(() => operator.reportExitRoad(secret0, { from: booth1 }))
-        //             .then(tx => {
-        //                 assert.strictEqual(tx.receipt.logs.length, 1);
-        //                 assert.strictEqual(tx.logs.length, 1);
-        //                 const logExited = tx.logs[0];
-        //                 assert.strictEqual(logExited.event, "LogRoadExited");
-        //                 assert.strictEqual(logExited.args.exitBooth, booth1);
-        //                 assert.strictEqual(logExited.args.exitSecretHashed, hashed0);
-        //                 assert.strictEqual(logExited.args.finalFee.toNumber(), deposit0 * multiplier0);
-        //                 assert.strictEqual(logExited.args.refundWeis.toNumber(), extraDeposit * multiplier0);
-        //                 // console.log(tx.receipt.gasUsed);
-        //                 return Promise.allNamed({
-        //                     hashed0: () => operator.getVehicleEntry(hashed0),
-        //                     pendingCount01: () => operator.getPendingPaymentCount(booth0, booth1),
-        //                     pendingCount02: () => operator.getPendingPaymentCount(booth0, booth2)
-        //                 });
-        //             })
-        //             .then(info => {
-        //                 assert.strictEqual(info.hashed0[0], vehicle0);
-        //                 assert.strictEqual(info.hashed0[1], booth0);
-        //                 assert.strictEqual(info.hashed0[2].toNumber(), 0);
-        //                 assert.strictEqual(info.pendingCount01.toNumber(), 0);
-        //                 assert.strictEqual(info.pendingCount02.toNumber(), 0);
-        //                 return Promise.allNamed({
-        //                     operator: () => web3.eth.getBalancePromise(operator.address),
-        //                     collected: () => operator.getCollectedFeesAmount(),
-        //                     vehicle0: () => web3.eth.getBalancePromise(vehicle0)
-        //                 });
-        //             })
-        //             .then(balances => {
-        //                 assert.strictEqual(balances.operator.toNumber(), deposit0 * multiplier0);
-        //                 assert.strictEqual(balances.collected.toNumber(), deposit0 * multiplier0);
-        //                 assert.strictEqual(
-        //                     balances.vehicle0.toString(10),
-        //                     vehicleInitBal.plus(extraDeposit * multiplier0).toString(10));
-        //             });
-        //     });
-
-        //     it("should be possible to report exit road on route with unknown price", function () {
-        //         return operator.reportExitRoad.call(secret0, { from: booth2 })
-        //             .then(result => assert.strictEqual(result.toNumber(), 2))
-        //             .then(() => operator.reportExitRoad(secret0, { from: booth2 }))
-        //             .then(tx => {
-        //                 assert.strictEqual(tx.receipt.logs.length, 1);
-        //                 assert.strictEqual(tx.logs.length, 1);
-        //                 const logPending = tx.logs[0];
-        //                 assert.strictEqual(logPending.event, "LogPendingPayment");
-        //                 assert.strictEqual(logPending.args.exitSecretHashed, hashed0);
-        //                 assert.strictEqual(logPending.args.entryBooth, booth0);
-        //                 assert.strictEqual(logPending.args.exitBooth, booth2);
-        //                 // console.log(tx.receipt.gasUsed);
-        //                 return Promise.allNamed({
-        //                     hashed0: () => operator.getVehicleEntry(hashed0),
-        //                     pendingCount01: () => operator.getPendingPaymentCount(booth0, booth1),
-        //                     pendingCount02: () => operator.getPendingPaymentCount(booth0, booth2)
-        //                 });
-        //             })
-        //             .then(info => {
-        //                 assert.strictEqual(info.hashed0[0], vehicle0);
-        //                 assert.strictEqual(info.hashed0[1], booth0);
-        //                 assert.strictEqual(info.hashed0[2].toNumber(), (deposit0 + extraDeposit) * multiplier0);
-        //                 assert.strictEqual(info.pendingCount01.toNumber(), 0);
-        //                 assert.strictEqual(info.pendingCount02.toNumber(), 1);
-        //                 return Promise.allNamed({
-        //                     operator: () => web3.eth.getBalancePromise(operator.address),
-        //                     collected: () => operator.getCollectedFeesAmount(),
-        //                     vehicle0: () => web3.eth.getBalancePromise(vehicle0)
-        //                 });
-        //             })
-        //             .then(balances => {
-        //                 assert.strictEqual(balances.operator.toNumber(), (deposit0 + extraDeposit) * multiplier0);
-        //                 assert.strictEqual(balances.collected.toNumber(), 0);
-        //                 assert.strictEqual(balances.vehicle0.toString(10), vehicleInitBal.toString(10));
-        //             });
-        //     });
-
-        // });
-
-        // describe("Pending payments with vehicles on same route, then setRoutePrice", function () {
-
-        //     const extraDeposit0 = deposit0 + randomIntIn(1, 1000);
-        //     const extraDeposit1 = deposit0 + randomIntIn(1, 1000);
-        //     let vehicle0InitBal, vehicle1InitBal;
-
-        //     beforeEach("should have 2 vehicles enter and exit road on same unknown route", function () {
-        //         return operator.enterRoad(
-        //             booth0, hashed0, { from: vehicle0, value: extraDeposit0 * multiplier0 })
-        //             .then(tx => operator.enterRoad(
-        //                 booth0, hashed1, { from: vehicle1, value: extraDeposit1 * multiplier1 }))
-        //             .then(tx => web3.eth.getBalancePromise(vehicle0))
-        //             .then(balance => vehicle0InitBal = balance)
-        //             .then(() => web3.eth.getBalancePromise(vehicle1))
-        //             .then(balance => vehicle1InitBal = balance)
-        //             .then(() => operator.reportExitRoad(secret1, { from: booth2 }))
-        //             .then(tx => operator.reportExitRoad(secret0, { from: booth2 }));
-        //     });
-
-        //     it("should be possible to set the base route price below both deposits and reduce count by 1", function () {
-        //         return operator.setRoutePrice.call(booth0, booth2, deposit0, { from: owner1 })
-        //             .then(success => assert.isTrue(success))
-        //             .then(() => operator.setRoutePrice(booth0, booth2, deposit0, { from: owner1 }))
-        //             .then(tx => {
-        //                 assert.strictEqual(tx.receipt.logs.length, 2);
-        //                 assert.strictEqual(tx.logs.length, 2);
-        //                 const logPriceSet = tx.logs[0];
-        //                 assert.strictEqual(logPriceSet.event, "LogRoutePriceSet");
-        //                 assert.strictEqual(logPriceSet.args.sender, owner1);
-        //                 assert.strictEqual(logPriceSet.args.entryBooth, booth0);
-        //                 assert.strictEqual(logPriceSet.args.exitBooth, booth2);
-        //                 assert.strictEqual(logPriceSet.args.priceWeis.toNumber(), deposit0);
-        //                 const logExited = tx.logs[1];
-        //                 assert.strictEqual(logExited.event, "LogRoadExited");
-        //                 assert.strictEqual(logExited.args.exitBooth, booth2);
-        //                 assert.strictEqual(logExited.args.exitSecretHashed, hashed1);
-        //                 assert.strictEqual(logExited.args.finalFee.toNumber(), deposit0 * multiplier1);
-        //                 assert.strictEqual(
-        //                     logExited.args.refundWeis.toNumber(),
-        //                     (extraDeposit1 - deposit0) * multiplier1);
-        //                 // console.log(tx.receipt.gasUsed);
-        //                 return Promise.allNamed({
-        //                     hashed0: () => operator.getVehicleEntry(hashed0),
-        //                     hashed1: () => operator.getVehicleEntry(hashed1),
-        //                     pendingCount01: () => operator.getPendingPaymentCount(booth0, booth1),
-        //                     pendingCount02: () => operator.getPendingPaymentCount(booth0, booth2)
-        //                 });
-        //             })
-        //             .then(info => {
-        //                 assert.strictEqual(info.hashed0[0], vehicle0);
-        //                 assert.strictEqual(info.hashed0[1], booth0);
-        //                 assert.strictEqual(info.hashed0[2].toNumber(), extraDeposit0 * multiplier0);
-        //                 assert.strictEqual(info.hashed1[0], vehicle1);
-        //                 assert.strictEqual(info.hashed1[1], booth0);
-        //                 assert.strictEqual(info.hashed1[2].toNumber(), 0);
-        //                 assert.strictEqual(info.pendingCount01.toNumber(), 0);
-        //                 assert.strictEqual(info.pendingCount02.toNumber(), 1);
-        //                 return Promise.allNamed({
-        //                     operator: () => web3.eth.getBalancePromise(operator.address),
-        //                     collected: () => operator.getCollectedFeesAmount(),
-        //                     vehicle0: () => web3.eth.getBalancePromise(vehicle0),
-        //                     vehicle1: () => web3.eth.getBalancePromise(vehicle1)
-        //                 });
-        //             })
-        //             .then(balances => {
-        //                 assert.strictEqual(
-        //                     balances.operator.toNumber(),
-        //                     extraDeposit0 * multiplier0 + deposit0 * multiplier1);
-        //                 assert.strictEqual(balances.collected.toNumber(), deposit0 * multiplier1);
-        //                 assert.strictEqual(balances.vehicle0.toString(10), vehicle0InitBal.toString(10));
-        //                 assert.strictEqual(
-        //                     balances.vehicle1.toString(10),
-        //                     vehicle1InitBal.plus((extraDeposit1 - deposit0) * multiplier1).toString(10));
-        //             });
-        //     });
-
-        //     describe("Clear one more pending payment", function () {
-
-        //         it("should be possible to set the base route price below both deposits then clear the second by hand", function () {
-        //             return operator.setRoutePrice(booth0, booth2, deposit0, { from: owner1 })
-        //                 .then(tx => operator.clearSomePendingPayments.call(booth0, booth2, 1, { from: owner0 }))
-        //                 .then(success => assert.isTrue(success))
-        //                 .then(() => operator.clearSomePendingPayments(booth0, booth2, 1, { from: owner0 }))
-        //                 .then(tx => {
-        //                     assert.strictEqual(tx.receipt.logs.length, 1);
-        //                     assert.strictEqual(tx.logs.length, 1);
-        //                     const logExited = tx.logs[0];
-        //                     assert.strictEqual(logExited.event, "LogRoadExited");
-        //                     assert.strictEqual(logExited.args.exitBooth, booth2);
-        //                     assert.strictEqual(logExited.args.exitSecretHashed, hashed0);
-        //                     assert.strictEqual(logExited.args.finalFee.toNumber(), deposit0 * multiplier0);
-        //                     assert.strictEqual(
-        //                         logExited.args.refundWeis.toNumber(),
-        //                         (extraDeposit0 - deposit0) * multiplier0);
-        //                     // console.log(tx.receipt.gasUsed);
-        //                     return Promise.allNamed({
-        //                         hashed0: () => operator.getVehicleEntry(hashed0),
-        //                         hashed1: () => operator.getVehicleEntry(hashed1),
-        //                         pendingCount01: () => operator.getPendingPaymentCount(booth0, booth1),
-        //                         pendingCount02: () => operator.getPendingPaymentCount(booth0, booth2)
-        //                     });
-        //                 })
-        //                 .then(info => {
-        //                     assert.strictEqual(info.hashed0[0], vehicle0);
-        //                     assert.strictEqual(info.hashed0[1], booth0);
-        //                     assert.strictEqual(info.hashed0[2].toNumber(), 0);
-        //                     assert.strictEqual(info.hashed1[0], vehicle1);
-        //                     assert.strictEqual(info.hashed1[1], booth0);
-        //                     assert.strictEqual(info.hashed1[2].toNumber(), 0);
-        //                     assert.strictEqual(info.pendingCount01.toNumber(), 0);
-        //                     assert.strictEqual(info.pendingCount02.toNumber(), 0);
-        //                     return Promise.allNamed({
-        //                         operator: () => web3.eth.getBalancePromise(operator.address),
-        //                         collected: () => operator.getCollectedFeesAmount(),
-        //                         vehicle0: () => web3.eth.getBalancePromise(vehicle0),
-        //                         vehicle1: () => web3.eth.getBalancePromise(vehicle1)
-        //                     });
-        //                 })
-        //                 .then(balances => {
-        //                     assert.strictEqual(
-        //                         balances.operator.toNumber(),
-        //                         deposit0 * (multiplier0 + multiplier1));
-        //                     assert.strictEqual(balances.collected.toNumber(), deposit0 * (multiplier0 + multiplier1));
-        //                     assert.strictEqual(
-        //                         balances.vehicle0.toString(10),
-        //                         vehicle0InitBal.plus((extraDeposit0 - deposit0) * multiplier0).toString(10));
-        //                     assert.strictEqual(
-        //                         balances.vehicle1.toString(10),
-        //                         vehicle1InitBal.plus((extraDeposit1 - deposit0) * multiplier1).toString(10));
-        //                 });
-        //         });
-
-        //     });
-
-        // });
-
-//    });
-
-//});
